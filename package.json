@@ -1,0 +1,19 @@
+{
+	"name": "@evalz/root",
+	"module": "index.ts",
+	"type": "module",
+	"workspaces": [
+		"test/*",
+		"package"
+	],
+	"devDependencies": {
+		"@types/bun": "latest",
+		"prettier": "^3.5.3"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"dependencies": {
+		"tsdown": "^0.12.5"
+	}
+}
