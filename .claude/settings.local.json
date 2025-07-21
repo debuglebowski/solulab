@@ -1,0 +1,26 @@
+{
+    "permissions": {
+        "allow": [
+            "Bash(pnpm init:*)",
+            "Bash(mkdir:*)",
+            "Bash(pnpm install:*)",
+            "Bash(pnpm build:*)",
+            "WebFetch(domain:waku.gg)",
+            "Bash(ls:*)",
+            "Bash(pnpm test:*)",
+            "Bash(pnpm ls:*)",
+            "Bash(grep:*)",
+            "Bash(cp:*)",
+            "Bash(chmod:*)",
+            "Bash(find:*)",
+            "Bash(mv:*)",
+            "Bash(bun run:*)",
+            "Bash(bun remove:*)",
+            "Bash(bun add:*)",
+            "Bash(bunx tsc:*)",
+            "Bash(node:*)",
+            "Bash(rm:*)"
+        ],
+        "deny": []
+    }
+}

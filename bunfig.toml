@@ -1,0 +1,14 @@
+[install]
+# Use Bun's package manager
+auto = "fallback"
+
+[install.scopes]
+# Scope configuration if needed
+
+[test]
+# Test configuration
+preload = ["./src/test-setup.ts"]
+
+[run]
+# Runtime configuration
+silent = false

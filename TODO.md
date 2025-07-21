@@ -1,0 +1,13 @@
+- [x] Use new entity solutions
+- [x] Use Sonnet instead of Opus
+- [x] Ensure typesafety
+- [x] Database should be moved into core
+- [x] Use JSON Database
+- [x] Structure file names
+  - [x] Use more folders
+- [x] Clean up file and folder structure
+  - [x] Use utils folder
+- [x] Make sure everything works
+- [x] Clean up CLAUDE.md
+- [x] Add biome
+- [ ] Add a lot of tests
