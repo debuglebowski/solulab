@@ -1,6 +1,8 @@
 import { Command } from 'commander';
-import { loadConfig } from './loadConfig';
-import { runLabs } from './runLabs';
+import { loadConfig } from './config';
+import { runLabs } from './runner';
+
+const config = loadConfig();
 
 const program = new Command();
 
@@ -10,7 +12,6 @@ program
     .command('run')
     .description('Run all discovered labs')
     .action(async () => {
-        const config = loadConfig();
         await runLabs(config);
     });
 

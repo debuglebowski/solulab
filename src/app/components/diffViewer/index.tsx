@@ -1,5 +1,5 @@
 import * as Diff from 'diff';
-import { formatValue } from '@/utils';
+import { formatValue } from '@/core/utils';
 
 interface DiffViewerProps {
     oldValue: unknown;

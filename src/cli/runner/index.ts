@@ -2,7 +2,7 @@ import { pathToFileURL } from 'node:url';
 import chalk from 'chalk';
 import type { LabResult } from '@/core';
 import { discoverLabs, database } from '@/core';
-import type { SolutionLabsConfig } from '../loadConfig';
+import type { SolutionLabsConfig } from '../config';
 
 export async function runLabs(config: SolutionLabsConfig) {
     const startTime = Date.now();

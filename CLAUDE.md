@@ -21,6 +21,17 @@
 ## Folder Naming Rule
 Folders that export ONE main thing must be named EXACTLY as their export (case-sensitive).
 
+**This rule applies to ALL folders, including:**
+- Component folders (e.g., `DiffViewer/` must export `DiffViewer`)
+- Function folders (e.g., `createSolutionLab/` must export `createSolutionLab`)
+- Object/namespace folders (e.g., `database/` must export `database` object)
+- Utility folders (e.g., `runCLI/` must export `runCLI` function)
+
+**When a folder exports multiple things:**
+- If there's a clear primary export, name the folder after it
+- If exports are related utilities, use a descriptive plural name (e.g., `helpers/`)
+- The folder's index.ts should re-export all public APIs
+
 ## index.*.ts Pattern
 Multi-file modules use sibling files:
 ```

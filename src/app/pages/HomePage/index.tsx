@@ -1,6 +1,6 @@
 import React from 'react';
 import type { PersistentLabResult } from '@/core/types';
-import { formatDuration } from '@/utils';
+import { formatDuration } from '@/core/utils';
 import { Layout, ResultValue } from '../../components';
 import { getLatestResults } from '../../lib';
 

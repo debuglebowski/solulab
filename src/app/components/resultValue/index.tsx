@@ -1,4 +1,4 @@
-import { formatValue, isLongText } from '@/utils';
+import { formatValue, isLongText } from '@/core/utils';
 
 interface ResultValueProps {
     value: unknown;
