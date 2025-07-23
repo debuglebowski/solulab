@@ -1,16 +1,16 @@
 import type { LabResult, PersistentLab, PersistentLabResult } from '../types';
-import { ensureInitialized, getNextId } from './index.init';
+import { db } from './index.instance';
+
+function getNextId(array: { id: number }[]): number {
+    return array.length === 0 ? 1 : Math.max(...array.map((item) => item.id)) + 1;
+}
 
 // Lab operations
 export async function getLabs(): Promise<PersistentLab[]> {
-    const db = await ensureInitialized();
-
     return [...db.data.labs].sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function getLabByName(name: string): Promise<PersistentLab | undefined> {
-    const db = await ensureInitialized();
-
     return db.data.labs.find((lab) => lab.name === name);
 }
 
@@ -20,8 +20,6 @@ export async function getOrCreateLab(
     paramSchema: unknown,
     resultSchema: unknown
 ): Promise<number> {
-    const db = await ensureInitialized();
-
     const existing = db.data.labs.find((lab) => lab.name === name);
 
     if (existing) {
@@ -45,8 +43,6 @@ export async function getOrCreateLab(
 
 // Lab result operations
 export async function getLabResults(labId?: number): Promise<PersistentLabResult[]> {
-    const db = await ensureInitialized();
-
     let results = db.data.labResults;
 
     if (labId !== undefined) {
@@ -59,8 +55,6 @@ export async function getLabResults(labId?: number): Promise<PersistentLabResult
 }
 
 export async function getLatestResults(): Promise<(PersistentLabResult & { labName: string })[]> {
-    const db = await ensureInitialized();
-
     return db.data.labResults
         .map((result) => {
             const lab = db.data.labs.find((l) => l.id === result.labId);
@@ -78,8 +72,6 @@ export async function hasResult(
     versionName: string,
     caseName: string
 ): Promise<boolean> {
-    const db = await ensureInitialized();
-
     return db.data.labResults.some(
         (result) =>
             result.labId === labId &&
@@ -92,8 +84,6 @@ export async function saveResult<TParams, TResult>(
     labId: number,
     labResult: LabResult<TParams, TResult>
 ): Promise<void> {
-    const db = await ensureInitialized();
-
     // Skip if result already exists
     if (await hasResult(labId, labResult.versionName, labResult.caseName)) {
         return;
@@ -122,8 +112,6 @@ export async function getResultMatrix(labId: number): Promise<{
     cases: string[];
     results: Map<string, PersistentLabResult>;
 }> {
-    const db = await ensureInitialized();
-
     const results = db.data.labResults
         .filter((result) => result.labId === labId)
         .sort((a, b) => {

@@ -1,17 +1,35 @@
 {
-  "name": "solulab-monorepo",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "install:all": "bun install && cd solulab && bun install && cd ../solulab-demo && bun install",
-    "dev": "cd solulab && bun run dev",
-    "build": "cd solulab && bun run build",
-    "demo:run": "cd solulab-demo && bun run dev",
-    "demo:seed": "cd solulab-demo && bun run seed",
-    "demo:reset": "cd solulab-demo && bun run reset",
-    "test": "cd solulab && bun test",
-    "typecheck": "cd solulab && bun run typecheck",
-    "check": "cd solulab && bun run check",
-    "check:fix": "cd solulab && bun run check:fix"
-  }
+    "name": "solulab-monorepo",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "install:all": "bun install && cd solulab && bun install && cd ../solulab-demo && bun install",
+        "dev": "cd solulab && bun run dev",
+        "build": "cd solulab && bun run build",
+        "demo:run": "cd solulab-demo && bun run dev",
+        "demo:seed": "cd solulab-demo && bun run seed",
+        "demo:reset": "cd solulab-demo && bun run reset",
+        "test": "cd solulab && bun test",
+        "typecheck": "cd solulab && bun run typecheck",
+        "format": "biome format --write .",
+        "format:check": "biome format .",
+        "lint": "bun run lint:biome && bun run lint:eslint",
+        "lint:fix": "bun run lint:biome:fix && bun run lint:eslint:fix",
+        "lint:biome": "biome lint .",
+        "lint:biome:fix": "biome lint --write .",
+        "lint:eslint": "eslint .",
+        "lint:eslint:fix": "eslint --fix .",
+        "check": "bun run format:check && bun run lint && cd solulab && bun run typecheck",
+        "check:fix": "bun run format && bun run lint:fix"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "^2.1.2",
+        "@eslint/js": "^9.31.0",
+        "@stylistic/eslint-plugin": "^5.2.1",
+        "@typescript-eslint/eslint-plugin": "^8.37.0",
+        "@typescript-eslint/parser": "^8.37.0",
+        "eslint": "^9.31.0",
+        "eslint-config-prettier": "^10.1.8",
+        "typescript": "^5.8.3"
+    }
 }

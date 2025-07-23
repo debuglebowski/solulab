@@ -3,7 +3,6 @@
     "version": "0.1.0",
     "type": "module",
     "description": "Define, run, store and visualise solution laboratories",
-    "main": "./dist/index.cjs",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "bin": {
@@ -12,8 +11,7 @@
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
-            "import": "./dist/index.js",
-            "require": "./dist/index.cjs"
+            "import": "./dist/index.js"
         }
     },
     "scripts": {
@@ -32,14 +30,14 @@
         "clean": "rm -rf dist",
         "// Code Quality": "",
         "typecheck": "tsc --noEmit",
-        "format": "biome format --write .",
-        "format:check": "biome format .",
+        "format": "cd .. && biome format --write solulab",
+        "format:check": "cd .. && biome format solulab",
         "lint": "bun run lint:biome && bun run lint:eslint",
         "lint:fix": "bun run lint:biome:fix && bun run lint:eslint:fix",
-        "lint:biome": "biome lint .",
-        "lint:biome:fix": "biome lint --write .",
-        "lint:eslint": "eslint src",
-        "lint:eslint:fix": "eslint --fix src",
+        "lint:biome": "cd .. && biome lint solulab",
+        "lint:biome:fix": "cd .. && biome lint --write solulab",
+        "lint:eslint": "cd .. && eslint solulab/src",
+        "lint:eslint:fix": "cd .. && eslint --fix solulab/src",
         "// Composite Commands": "",
         "check": "bun run format:check && bun run lint && bun run typecheck",
         "check:fix": "bun run format && bun run lint:fix",
@@ -66,28 +64,21 @@
         "zod": "^3.24.1"
     },
     "devDependencies": {
-        "@biomejs/biome": "^2.1.2",
         "@radix-ui/react-select": "^2.1.4",
-        "@stylistic/eslint-plugin": "^5.2.1",
         "@types/bun": "latest",
         "@types/diff": "^7.0.0",
         "@types/react": "^19.0.3",
         "@types/react-dom": "^19.0.2",
-        "@typescript-eslint/eslint-plugin": "^8.37.0",
-        "@typescript-eslint/parser": "^8.37.0",
         "@vitejs/plugin-react": "^4.3.4",
         "autoprefixer": "^10.4.20",
         "clsx": "^2.1.1",
         "diff": "^7.0.0",
-        "eslint": "^9.31.0",
-        "eslint-config-prettier": "^10.1.8",
         "postcss": "^8.5.3",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
         "react-router-dom": "^7.1.1",
         "tailwindcss": "^3.4.17",
         "tsup": "^8.5.0",
-        "typescript": "^5.8.3",
         "vite": "^6.2.3",
         "vitest": "^2.1.8"
     },
