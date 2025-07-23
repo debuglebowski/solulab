@@ -1,10 +1,27 @@
+# Dependencies
 node_modules
+solulab/node_modules
+solulab-demo/node_modules
+
+# Build outputs
+solulab/dist
 dist
-.turbo
-*.log
-.DS_Store
+
+# Databases
+solulab-demo/.solulab
+*.db
+
+# Environment
 .env
 .env.local
+
+# System files
+.DS_Store
+*.log
+
+# IDE
 .vscode
+
+# Testing
 coverage
-*.db
+.turbo

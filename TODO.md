@@ -1,3 +1,3 @@
-- [ ] Create E2E tests for CLI
-- [ ] Create a dev database file
-- [ ] Add a lot of tests
+- [ ] Add UI Tests in order for the AI to iterate on the UI
+- [ ] Add other tests?
+- [ ] Add lint:fix to CLAUDE.md instead of just lint

@@ -1,26 +1,39 @@
 {
-    "permissions": {
-        "allow": [
-            "Bash(pnpm init:*)",
-            "Bash(mkdir:*)",
-            "Bash(pnpm install:*)",
-            "Bash(pnpm build:*)",
-            "WebFetch(domain:waku.gg)",
-            "Bash(ls:*)",
-            "Bash(pnpm test:*)",
-            "Bash(pnpm ls:*)",
-            "Bash(grep:*)",
-            "Bash(cp:*)",
-            "Bash(chmod:*)",
-            "Bash(find:*)",
-            "Bash(mv:*)",
-            "Bash(bun run:*)",
-            "Bash(bun remove:*)",
-            "Bash(bun add:*)",
-            "Bash(bunx tsc:*)",
-            "Bash(node:*)",
-            "Bash(rm:*)"
-        ],
-        "deny": []
-    }
+  "permissions": {
+    "allow": [
+      "Bash(pnpm init:*)",
+      "Bash(mkdir:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm build:*)",
+      "WebFetch(domain:waku.gg)",
+      "Bash(ls:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm ls:*)",
+      "Bash(grep:*)",
+      "Bash(cp:*)",
+      "Bash(chmod:*)",
+      "Bash(find:*)",
+      "Bash(mv:*)",
+      "Bash(bun run:*)",
+      "Bash(bun remove:*)",
+      "Bash(bun add:*)",
+      "Bash(bunx tsc:*)",
+      "Bash(node:*)",
+      "Bash(rm:*)",
+      "Bash(git mv:*)",
+      "Bash(bun install:*)",
+      "Bash(npx solulab run)",
+      "Bash(bun link:*)",
+      "Bash(npx solulab:*)",
+      "Bash(git add:*)",
+      "Bash(bun pm ls:*)",
+      "Bash(bun x tsx:*)",
+      "Bash(bun test:*)",
+      "Bash(bun:*)",
+      "Bash(timeout:*)",
+      "Bash(true)",
+      "WebFetch(domain:github.com)"
+    ],
+    "deny": []
+  }
 }
