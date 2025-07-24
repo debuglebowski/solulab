@@ -4,6 +4,7 @@
     "private": true,
     "type": "module",
     "scripts": {
+        "dev": "solulab run",
         "run": "solulab run",
         "reset": "solulab reset",
         "app": "solulab app"

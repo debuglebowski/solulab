@@ -8,6 +8,11 @@
     "bin": {
         "solulab": "./bin/solulab.js"
     },
+    "files": [
+        "bin",
+        "dist",
+        "src"
+    ],
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
@@ -16,35 +21,20 @@
     },
     "scripts": {
         "// Development": "",
-        "dev": "bun run vite",
+        "dev": "vite",
         "cli": "bun run src/cli/index.ts",
-        "cli:dev": "bun run src/cli/index.ts",
+        "// Testing": "",
         "test": "bun run typecheck && bun test",
         "test:watch": "bun test --watch",
-        "test:e2e": "vitest run --config tests/vitest.e2e.config.ts",
-        "test:e2e:watch": "vitest --config tests/vitest.e2e.config.ts",
         "// Building": "",
-        "build": "bun run clean && bun run typecheck && bun run check && bun run build:lib && bun run build:ui",
+        "build": "bun run clean && bun run typecheck && bun run build:lib && bun run build:ui",
         "build:lib": "tsup",
         "build:ui": "vite build",
         "clean": "rm -rf dist",
         "// Code Quality": "",
         "typecheck": "tsc --noEmit",
-        "format": "cd .. && biome format --write solulab",
-        "format:check": "cd .. && biome format solulab",
-        "lint": "bun run lint:biome && bun run lint:eslint",
-        "lint:fix": "bun run lint:biome:fix && bun run lint:eslint:fix",
-        "lint:biome": "cd .. && biome lint solulab",
-        "lint:biome:fix": "cd .. && biome lint --write solulab",
-        "lint:eslint": "cd .. && eslint solulab/src",
-        "lint:eslint:fix": "cd .. && eslint --fix solulab/src",
-        "// Composite Commands": "",
-        "check": "bun run format:check && bun run lint && bun run typecheck",
-        "check:fix": "bun run format && bun run lint:fix",
-        "// CI/CD & Hooks": "",
-        "ci": "bun run check && bun run test && bun run build",
-        "precommit": "bun run check:fix",
-        "prepublishOnly": "bun run ci"
+        "// Publishing": "",
+        "prepublishOnly": "bun run typecheck && bun test && bun run build"
     },
     "keywords": [
         "eval",

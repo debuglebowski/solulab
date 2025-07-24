@@ -108,7 +108,6 @@ solulab/                  # Main library
 │   │   └── types/       # Shared types
 │   ├── app/             # React UI (Vite)
 │   └── cli/             # CLI tool
-├── tests/e2e/           # Integration tests
 └── dist/                # Build output
 
 solulab-demo/            # Demo project
@@ -116,12 +115,6 @@ solulab-demo/            # Demo project
 ```
 
 ## 🔧 Common Workflows
-
-### Running E2E Tests
-```bash
-bun run build         # Required first!
-bun run test:e2e      # Run integration tests
-```
 
 ### Debugging Database Issues
 ```bash
@@ -143,9 +136,8 @@ export default {
 1. **Forgetting lab__ prefix** → Lab won't be discovered
 2. **Using primitive result schemas** → Use objects: `z.object({ ... })`
 3. **Missing error handling** → Always add try-catch with fallbacks
-4. **Not building before E2E tests** → Run `bun run build` first
-5. **Wrong import paths after moving files** → Update all imports
-6. **Creating unnecessary files** → Prefer editing existing files
+4. **Wrong import paths after moving files** → Update all imports
+5. **Creating unnecessary files** → Prefer editing existing files
 
 ## 📋 Pre-Completion Checklist
 
