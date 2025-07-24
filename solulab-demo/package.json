@@ -4,9 +4,9 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "solulab run",
-        "seed": "solulab run --all",
-        "reset": "solulab reset"
+        "run": "solulab run",
+        "reset": "solulab reset",
+        "app": "solulab app"
     },
     "dependencies": {
         "solulab": "file:../solulab"

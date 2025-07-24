@@ -9,6 +9,7 @@
         "demo:run": "cd solulab-demo && bun run dev",
         "demo:seed": "cd solulab-demo && bun run seed",
         "demo:reset": "cd solulab-demo && bun run reset",
+        "demo:app": "cd solulab-demo && bun run app",
         "test": "cd solulab && bun test",
         "typecheck": "cd solulab && bun run typecheck",
         "format": "biome format --write .",

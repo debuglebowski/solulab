@@ -1,154 +1,157 @@
-# CLAUDE.md
+# Solulab - Claude Code Guide
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## 🚀 Quick Reference
 
-## Project Overview
-
-Solulab is a TypeScript-based solution laboratory framework for systematically testing and comparing multiple implementations of the same functionality. It consists of:
-- `solulab/` - Main framework library with CLI and web UI
-- `solulab-demo/` - Demo project showcasing usage
-
-## Essential Commands
-
-### Development
+### Starting Any Task
 ```bash
-# Install all dependencies (monorepo)
-bun run install:all
-
-# Start UI development server
-bun run dev
-
-# Run tests with type checking
-bun run test
-
-# Type check only
-bun run typecheck
-
-# Lint and format check
-bun run check
-
-# Fix linting and formatting issues
-bun run check:fix
-
-# Build library and UI
-bun run build
+cd solulab         # Always work from library root
+bun run install:all # If dependencies are missing
 ```
 
-### Demo Project
+### Before Marking Complete
 ```bash
-# Run labs in demo
-bun run demo:run
-
-# Reset demo database
-bun run demo:reset
+bun run check:fix  # 1. Auto-fix formatting
+bun run typecheck  # 2. Must pass (zero errors)
 ```
 
-### Running Individual Tests
+### Most Used Commands
 ```bash
-# In solulab directory
-bun test path/to/test.test.ts
-bun run test:watch
-bun run test:e2e
+bun run dev        # Start UI (localhost:5173)
+bun run demo:run   # Test lab implementations
+bun test          # Run unit tests
 ```
 
-## Critical Patterns and Conventions
+## 🎯 When Working on Tasks
 
-### Module Organization
-Every multi-file module follows this pattern:
-- `index.ts` - Main exports and facade
-- `index.types.ts` - Type definitions
-- `index.operations.ts` - Business logic
-- Feature folders for complex functionality
-
-### Lab Export Naming
-**CRITICAL**: Lab exports MUST start with `lab__` prefix in snake_case:
+### Creating/Modifying a Lab
+✅ **DO:**
 ```typescript
-export const lab__cpu_usage = createSolutionLab({...})  // ✓ Correct
-export const labCpuUsage = createSolutionLab({...})     // ✗ Wrong
-export const cpu_usage = createSolutionLab({...})       // ✗ Wrong
+// File: something.lab.ts
+export const lab__feature_name = createSolutionLab({
+    // Result schema MUST be an object
+    resultSchema: z.object({ value: z.number() }),
+    // ... rest of lab
+});
 ```
 
-### Database Pattern
-The database uses lazy initialization:
+❌ **DON'T:**
 ```typescript
-// Always ensure initialization before operations
-await database.ensureInitialized();
+export const labFeatureName = ...     // Wrong: camelCase
+export const feature_name = ...       // Wrong: missing lab__ prefix
+resultSchema: z.number()             // Wrong: not an object
 ```
 
-### File Naming Conventions
-- Lab files: `*.lab.ts` or `*.lab.js`
-- Module files: `index.ts` for main exports
-- Type files: `index.types.ts`
-- Operation files: `index.operations.ts`
-
-### Code Style
-- 4-space indentation (enforced by Biome)
-- Single quotes for strings
-- Semicolons required
-- 100-character line limit
-- Blank lines required between certain statements (ESLint)
-
-### Path Aliases
-Use `@/` for imports from src:
-```typescript
-import { database } from '@/core/database';
-```
-
-## Architecture Overview
-
-### Core Structure
-```
-solulab/src/
-├── core/
-│   ├── database/      # SQLite persistence layer
-│   ├── labs/          # Lab creation and discovery
-│   ├── types/         # Shared type definitions
-│   └── utils/         # Utility functions
-├── app/               # React web UI
-│   ├── components/    # UI components
-│   ├── pages/         # Application pages
-│   └── lib/api/       # API client
-└── cli/              # Command-line interface
-    ├── config/        # Configuration handling
-    └── runner/        # Lab execution logic
-```
-
-### Key Technologies
-- Runtime: Bun (modern JavaScript runtime)
-- Language: TypeScript with strict mode
-- UI: React + Vite + Tailwind CSS
-- Database: SQLite via LowDB
-- Schema validation: Zod
-- Testing: Vitest (E2E) + Bun test (unit)
-- Linting: Biome + ESLint
-- Building: tsup (lib) + Vite (UI)
-
-## Common Development Tasks
-
-### Adding a New Lab
-1. Create a file ending with `.lab.ts`
-2. Export lab with `lab__` prefix
-3. Use `createSolutionLab` factory
-4. Define param and result schemas with Zod
-5. Implement versions and test cases
-
-### Running Specific Labs
+### Creating a New Module
 ```bash
-cd solulab-demo
-bun run solulab run --lab="lab_name"
+# 1. Create folder matching main export
+mkdir src/core/MyFeature    # Folder name = export name
+
+# 2. Create standard files
+touch src/core/MyFeature/index.ts           # Public API
+touch src/core/MyFeature/index.types.ts     # Types
+touch src/core/MyFeature/index.operations.ts # Logic
+
+# 3. Export from parent
+# Add to src/core/index.ts:
+export { MyFeature } from './MyFeature';
+```
+
+### Modifying Existing Code
+1. Check imports after moving files (`../` → `../../`)
+2. Follow existing patterns in the file
+3. Use error handling with fallbacks:
+```typescript
+try {
+    return await database.operation();
+} catch (error) {
+    console.warn('Operation failed:', error);
+    return fallbackValue;
+}
+```
+
+## ⚠️ Critical Patterns
+
+### Naming Conventions
+| Type | Pattern | Example |
+|------|---------|---------|
+| Lab exports | `lab__snake_case` | `lab__cpu_benchmark` |
+| Folders | Match main export | `DiffViewer/` exports `DiffViewer` |
+| Lab files | `*.lab.ts` | `performance.lab.ts` |
+| Components | `Name/index.tsx` | `Button/index.tsx` |
+
+### Import Patterns
+```typescript
+// ✅ Correct
+import { helper } from './index.operations';  // Internal
+import { database } from '@/core/database';    // External
+import type React from 'react';               // Type imports
+
+// ❌ Wrong
+import { helper } from '../MyModule/index.operations'; // Use @/ for external
+```
+
+### Code Standards
+- **Indentation**: 4 spaces (enforced)
+- **Quotes**: Single only `'text'`
+- **Arrays**: `string[]` not `Array<string>`
+- **Blocks**: Always use braces `if (x) { ... }`
+- **Padding**: Blank lines before returns, after variable declarations
+
+## 📁 Project Structure
+
+```
+solulab/                  # Main library
+├── src/
+│   ├── core/            # Business logic
+│   │   ├── database/    # LowDB persistence
+│   │   ├── labs/        # Lab framework
+│   │   └── types/       # Shared types
+│   ├── app/             # React UI (Vite)
+│   └── cli/             # CLI tool
+├── tests/e2e/           # Integration tests
+└── dist/                # Build output
+
+solulab-demo/            # Demo project
+└── labs/                # Example labs
+```
+
+## 🔧 Common Workflows
+
+### Running E2E Tests
+```bash
+bun run build         # Required first!
+bun run test:e2e      # Run integration tests
 ```
 
 ### Debugging Database Issues
-The database is stored at `.solulab/solulab.db`. To reset:
 ```bash
-rm -rf .solulab/
+rm -rf .solulab/      # Reset database
+bun run demo:run      # Recreate with fresh data
 ```
 
-## Important Notes
+### Configuring CLI
+```javascript
+// solulab.config.js
+export default {
+    dbPath: '.custom/db.json',    // Custom database location
+    labGlobs: ['**/*.lab.js']     // Custom lab file patterns
+};
+```
 
-- The project uses ES modules throughout
-- All database operations are async
-- Lab result schemas must be objects (not primitives)
-- The UI automatically uses demo database in dev mode
-- Type checking is strict - no implicit any allowed
-- Always run `check:fix` before committing changes
+## 🚫 Common Mistakes to Avoid
+
+1. **Forgetting lab__ prefix** → Lab won't be discovered
+2. **Using primitive result schemas** → Use objects: `z.object({ ... })`
+3. **Missing error handling** → Always add try-catch with fallbacks
+4. **Not building before E2E tests** → Run `bun run build` first
+5. **Wrong import paths after moving files** → Update all imports
+6. **Creating unnecessary files** → Prefer editing existing files
+
+## 📋 Pre-Completion Checklist
+
+- [ ] Ran `bun run check:fix`
+- [ ] Ran `bun run typecheck` (zero errors)
+- [ ] All imports use correct patterns
+- [ ] Error handling has fallbacks
+- [ ] No new files unless necessary
+- [ ] Components exported in parent index.ts

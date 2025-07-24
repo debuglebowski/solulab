@@ -32,7 +32,14 @@
             "Bash(bun:*)",
             "Bash(timeout:*)",
             "Bash(true)",
-            "WebFetch(domain:github.com)"
+            "WebFetch(domain:github.com)",
+            "WebFetch(domain:docs.anthropic.com)",
+            "Bash(./node_modules/.bin/solulab:*)",
+            "Bash(echo:*)",
+            "Bash(npm run:*)",
+            "Bash(curl:*)",
+            "mcp__ide__getDiagnostics",
+            "Bash(pkill:*)"
         ],
         "deny": []
     }

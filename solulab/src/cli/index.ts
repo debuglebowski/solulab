@@ -3,6 +3,7 @@ import * as fs from 'node:fs';
 import chalk from 'chalk';
 import { loadConfig } from './config';
 import { runLabs } from './runner';
+import { app } from './app';
 
 const config = loadConfig();
 
@@ -33,6 +34,15 @@ program
         }
 
         console.log(chalk.green('✨ Reset complete!'));
+    });
+
+program
+    .command('app')
+    .description('Start the visualization UI to explore lab results')
+    .option('-p, --port <port>', 'port to run the server on', '3000')
+    .action(async (options) => {
+        process.env.PORT = options.port;
+        await app(config);
     });
 
 program.parse();

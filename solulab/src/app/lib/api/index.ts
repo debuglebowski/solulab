@@ -1,82 +1,43 @@
-// API layer - uses real database in development, mock data in production
+// API layer - fetches real database in development mode
 import type { PersistentLab, PersistentLabResult } from '@/core/types';
-import { database } from '@/core/database';
 
-// Check if we're in development mode and should use real database
-const USE_REAL_DB = import.meta.env.DEV;
+interface DatabaseSchema {
+    labs: PersistentLab[];
+    labResults: PersistentLabResult[];
+}
 
-const mockLabs: PersistentLab[] = [
-    {
-        id: 1,
-        name: 'CPU Usage',
-        description: 'Measures CPU usage',
-        paramSchema: '{}',
-        resultSchema: '{}',
-    },
-    {
-        id: 2,
-        name: 'Memory Usage',
-        description: 'Monitors memory',
-        paramSchema: '{}',
-        resultSchema: '{}',
-    },
-];
+let cachedDatabase: DatabaseSchema | null = null;
 
-// Mock data for demo
-const mockResults: (PersistentLabResult & { labName: string })[] = [
-    {
-        id: 1,
-        labId: 1,
-        labName: 'CPU Usage',
-        versionName: 'naive average',
-        caseName: 'medium sample',
-        params: JSON.stringify({ sampleMs: 500 }),
-        result: JSON.stringify(0.15),
-        timestamp: new Date().toISOString(),
-        duration: 502,
-        error: null,
-    },
-    {
-        id: 2,
-        labId: 2,
-        labName: 'Memory Usage',
-        versionName: 'basic calculation',
-        caseName: 'default',
-        params: JSON.stringify({ includeBuffers: false }),
-        result: JSON.stringify({
-            totalMB: 16384,
-            freeMB: 4096,
-            usedMB: 12288,
-            usagePercent: 75,
-        }),
-        timestamp: new Date().toISOString(),
-        duration: 15,
-        error: null,
-    },
-];
-
-export async function getLabs(): Promise<PersistentLab[]> {
-    if (USE_REAL_DB) {
-        try {
-            return await database.getLabs();
-        } catch (error) {
-            console.warn('Failed to load from database, falling back to mock data:', error);
-        }
+async function fetchDatabase(): Promise<DatabaseSchema> {
+    if (cachedDatabase) {
+        return cachedDatabase;
     }
 
-    return mockLabs;
+    try {
+        const response = await fetch('/api/database');
+
+        if (response.ok) {
+            const data = await response.json();
+            cachedDatabase = data;
+
+            return data;
+        }
+    } catch (error) {
+        console.error('Failed to fetch database:', error);
+    }
+
+    throw new Error('Failed to load database. Make sure to run "solulab run" first.');
+}
+
+export async function getLabs(): Promise<PersistentLab[]> {
+    const db = await fetchDatabase();
+
+    return db.labs;
 }
 
 export async function getLabResults(labId?: number): Promise<PersistentLabResult[]> {
-    if (USE_REAL_DB) {
-        try {
-            return await database.getLabResults(labId);
-        } catch (error) {
-            console.warn('Failed to load from database, falling back to mock data:', error);
-        }
-    }
-
-    let results = mockResults;
+    const db = await fetchDatabase();
+    let results = db.labResults;
 
     if (labId !== undefined) {
         results = results.filter((r) => r.labId === labId);
@@ -86,15 +47,31 @@ export async function getLabResults(labId?: number): Promise<PersistentLabResult
 }
 
 export async function getLatestResults(): Promise<(PersistentLabResult & { labName: string })[]> {
-    if (USE_REAL_DB) {
-        try {
-            return await database.getLatestResults();
-        } catch (error) {
-            console.warn('Failed to load from database, falling back to mock data:', error);
+    const db = await fetchDatabase();
+    const labs = db.labs;
+
+    // Join lab names with results
+    const resultsWithNames = db.labResults.map((result) => {
+        const lab = labs.find((l) => l.id === result.labId);
+
+        return {
+            ...result,
+            labName: lab?.name || 'Unknown Lab',
+        };
+    });
+
+    // Group by labId and get the latest result for each
+    const latestByLab = new Map<number, (typeof resultsWithNames)[0]>();
+
+    for (const result of resultsWithNames) {
+        const existing = latestByLab.get(result.labId);
+
+        if (!existing || new Date(result.timestamp) > new Date(existing.timestamp)) {
+            latestByLab.set(result.labId, result);
         }
     }
 
-    return mockResults;
+    return Array.from(latestByLab.values());
 }
 
 export async function getLabByName(name: string): Promise<PersistentLab | null> {
