@@ -20,6 +20,11 @@ async function fetchDatabase(): Promise<DatabaseSchema> {
             const data = await response.json();
             cachedDatabase = data;
 
+            // Log in development mode
+            if (import.meta.env.DEV) {
+                console.log('[Solulab API] Database loaded successfully');
+            }
+
             return data;
         }
     } catch (error) {

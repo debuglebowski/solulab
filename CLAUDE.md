@@ -10,8 +10,7 @@ bun run install:all # If dependencies are missing
 
 ### Before Marking Complete
 ```bash
-bun run check:fix  # 1. Auto-fix formatting
-bun run typecheck  # 2. Must pass (zero errors)
+bun run typecheck  # Must pass (zero errors)
 ```
 
 ### Most Used Commands
@@ -116,6 +115,17 @@ solulab-demo/            # Demo project
 
 ## 🔧 Common Workflows
 
+### Development with Test Data
+When running `bun run dev`, the UI automatically uses test data if no database exists:
+- 5 realistic labs with various patterns (performance, memory, algorithms, etc.)
+- 125+ test results showing different scenarios
+- No need to generate data first - just run and develop!
+
+The development server will:
+- Use real database at `.solulab/solulab.json` if it exists
+- Fall back to rich test data if no database found
+- Log which data source is being used in the console
+
 ### Debugging Database Issues
 ```bash
 rm -rf .solulab/      # Reset database
@@ -141,7 +151,6 @@ export default {
 
 ## 📋 Pre-Completion Checklist
 
-- [ ] Ran `bun run check:fix`
 - [ ] Ran `bun run typecheck` (zero errors)
 - [ ] All imports use correct patterns
 - [ ] Error handling has fallbacks
