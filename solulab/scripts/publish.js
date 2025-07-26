@@ -92,7 +92,7 @@ async function checkPrerequisites() {
 }
 
 async function publish(options = {}) {
-    const { dryRun = true, version, tag = 'latest' } = options;
+    const { dryRun = true, version, tag = 'latest', otp } = options;
     
     log(`\n${colors.bright}Solulab NPM Publishing Script${colors.reset}`);
     log(`Mode: ${dryRun ? 'DRY RUN' : 'LIVE PUBLISH'}`, dryRun ? colors.yellow : colors.red);
@@ -120,7 +120,7 @@ async function publish(options = {}) {
         log(`\nPublishing ${pkg.name}@${pkg.version} with tag '${tag}'`, colors.bright);
         
         // Run npm publish
-        const publishCmd = `npm publish --tag ${tag} ${dryRun ? '--dry-run' : ''}`;
+        const publishCmd = `npm publish --tag ${tag} ${dryRun ? '--dry-run' : ''} ${otp ? `--otp=${otp}` : ''}`;
         await runCommand(publishCmd, 'Publishing to npm', false);
         
         if (!dryRun) {
@@ -134,6 +134,14 @@ async function publish(options = {}) {
         
     } catch (error) {
         log(`\n✗ Publishing failed: ${error.message}`, colors.red);
+        
+        // Check if error is due to missing OTP
+        if (error.message.includes('OTP') || error.message.includes('one-time password')) {
+            log('\nℹ NPM requires a one-time password from your authenticator.', colors.yellow);
+            log('  Please run again with --otp=<code> parameter:', colors.yellow);
+            log(`  npm run publish:patch -- --otp=123456`, colors.cyan);
+        }
+        
         process.exit(1);
     }
 }
@@ -143,7 +151,8 @@ const args = process.argv.slice(2);
 const options = {
     dryRun: !args.includes('--no-dry-run'),
     version: args.find(arg => arg.startsWith('--version='))?.split('=')[1],
-    tag: args.find(arg => arg.startsWith('--tag='))?.split('=')[1] || 'latest'
+    tag: args.find(arg => arg.startsWith('--tag='))?.split('=')[1] || 'latest',
+    otp: args.find(arg => arg.startsWith('--otp='))?.split('=')[1]
 };
 
 if (args.includes('--help')) {
@@ -156,6 +165,7 @@ Options:
   --no-dry-run     Actually publish (default is dry run)
   --version=TYPE   Bump version before publishing (patch|minor|major)
   --tag=TAG        NPM dist-tag (default: latest)
+  --otp=CODE       One-time password from your authenticator
   --help           Show this help message
 
 Examples:
@@ -167,6 +177,9 @@ Examples:
   
   # Publish with custom tag
   node scripts/publish.js --tag=beta --no-dry-run
+  
+  # Publish with OTP
+  node scripts/publish.js --version=patch --no-dry-run --otp=123456
 `);
     process.exit(0);
 }

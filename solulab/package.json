@@ -1,12 +1,12 @@
 {
     "name": "solulab",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "type": "module",
     "description": "Define, run, store and visualise solution laboratories",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "bin": {
-        "solulab": "./bin/solulab.js"
+        "solulab": "bin/solulab.js"
     },
     "files": [
         "bin",
@@ -52,14 +52,14 @@
         "typescript",
         "cli"
     ],
-    "author": "Your Name <your.email@example.com>",
+    "author": "debuglebowski",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/yourusername/solulab.git"
+        "url": "https://github.com/debuglebowski/solulab"
     },
-    "homepage": "https://github.com/yourusername/solulab#readme",
+    "homepage": "https://github.com/debuglebowski/solulab#readme",
     "bugs": {
-        "url": "https://github.com/yourusername/solulab/issues"
+        "url": "https://github.com/debuglebowski/solulab/issues"
     },
     "license": "MIT",
     "dependencies": {
