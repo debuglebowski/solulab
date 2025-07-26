@@ -1,74 +1,65 @@
-import type React from 'react';
-import { cn } from '@/app/utils/cn';
+import React from 'react';
+import { Dropdown, DropdownOption } from '@/app/components/dropdown';
 
-interface SelectFieldProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectFieldProps {
     label: string;
     options: Array<{ value: string; label: string }>;
+    value?: string;
+    onChange?: (value: string) => void;
     placeholder?: string;
+    className?: string;
+    id?: string;
+    disabled?: boolean;
 }
 
 export function SelectField({
     label,
     options,
+    value = '',
+    onChange,
     placeholder = 'Choose an option...',
     className,
     id,
-    ...props
+    disabled = false,
 }: SelectFieldProps) {
-    const fieldId = id || `select-${label.toLowerCase().replace(/\s+/g, '-')}`;
+    const [isOpen, setIsOpen] = React.useState(false);
+
+    // Ensure value is set to first option if no value provided
+    const effectiveValue = value === '' && options.length > 0 ? options[0].value : value;
+    
+    // Find the label for the current value
+    const selectedOption = options.find(opt => opt.value === effectiveValue);
+    const displayValue = selectedOption ? selectedOption.label : '';
+
+    const handleSelect = (optionValue: string) => {
+        if (onChange) {
+            onChange(optionValue);
+        }
+        setIsOpen(false);
+    };
 
     return (
-        <div className="space-y-2">
-            <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700">
-                {label}
-            </label>
-            <div className="relative">
-                <select
-                    id={fieldId}
-                    className={cn(
-                        // Base styles
-                        'block w-full appearance-none rounded-lg border bg-white px-4 py-2.5 pr-10',
-                        // Border styles
-                        'border-gray-200 hover:border-gray-300',
-                        // Shadow and background
-                        'shadow-sm hover:shadow-md transition-all duration-200',
-                        // Focus styles
-                        'focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20',
-                        // Text styles
-                        'text-gray-900 placeholder:text-gray-400',
-                        // Disabled styles
-                        'disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500',
-                        // Font
-                        'text-sm font-medium',
-                        className
-                    )}
-                    {...props}
-                >
-                    <option value="" className="text-gray-400">
-                        {placeholder}
-                    </option>
-                    {options.map((option) => (
-                        <option key={option.value} value={option.value} className="text-gray-900">
-                            {option.label}
-                        </option>
-                    ))}
-                </select>
-                {/* Custom chevron icon */}
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                    <svg
-                        className="h-5 w-5 text-gray-400"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        aria-hidden="true"
-                    >
-                        <path
-                            fillRule="evenodd"
-                            d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-                            clipRule="evenodd"
-                        />
-                    </svg>
-                </div>
-            </div>
-        </div>
+        <Dropdown
+            label={label}
+            placeholder={placeholder}
+            value={effectiveValue}
+            displayValue={displayValue}
+            isOpen={isOpen}
+            onToggle={() => setIsOpen(!isOpen)}
+            onClose={() => setIsOpen(false)}
+            className={className}
+            id={id}
+            disabled={disabled}
+        >
+            {options.map((option) => (
+                <DropdownOption
+                    key={option.value}
+                    value={option.value}
+                    label={option.label}
+                    isSelected={option.value === effectiveValue}
+                    onClick={() => handleSelect(option.value)}
+                />
+            ))}
+        </Dropdown>
     );
 }

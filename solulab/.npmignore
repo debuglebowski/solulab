@@ -1,0 +1,54 @@
+# Development files
+src/
+*.ts
+!dist/**/*.d.ts
+tsconfig.json
+tsup.config.ts
+vite.config.ts
+tailwind.config.js
+postcss.config.js
+
+# Test files
+**/*.test.*
+**/*.spec.*
+__tests__/
+test/
+tests/
+
+# Build tools and config
+.vite/
+node_modules/
+bun.lockb
+pnpm-lock.yaml
+yarn.lock
+
+# Documentation and development
+CLAUDE.md
+.claude/
+*.md
+!README.md
+scripts/
+!bin/
+
+# Git and CI
+.git/
+.github/
+.gitignore
+
+# IDE and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Local data
+.solulab/
+solulab-demo/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

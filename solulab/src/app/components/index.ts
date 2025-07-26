@@ -1,5 +1,10 @@
 export { ComparisonMatrix } from './comparisonMatrix';
 export { DiffViewer } from './diffViewer';
+export { Dropdown, DropdownOption } from './dropdown';
+export { HorizontalComparisonMatrix } from './horizontalComparisonMatrix';
 export { Layout } from './layout';
+export { MultiSelectField } from './multiSelectField';
 export { ResultValue } from './resultValue';
 export { SelectField } from './selectors';
+export { TableComparisonMatrix } from './tableComparisonMatrix';
+export { VersionSelector } from './versionSelector';

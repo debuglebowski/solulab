@@ -11,7 +11,8 @@
     "files": [
         "bin",
         "dist",
-        "src"
+        "README.md",
+        "LICENSE"
     ],
     "exports": {
         ".": {
@@ -34,7 +35,13 @@
         "// Code Quality": "",
         "typecheck": "tsc --noEmit",
         "// Publishing": "",
-        "prepublishOnly": "bun run typecheck && bun test && bun run build"
+        "prepublishOnly": "bun run typecheck && bun test && bun run build",
+        "preversion": "bun run test",
+        "postversion": "git push && git push --tags",
+        "release:patch": "bun version patch",
+        "release:minor": "bun version minor",
+        "release:major": "bun version major",
+        "release:dry": "node scripts/publish.js --dry-run"
     },
     "keywords": [
         "eval",
@@ -43,7 +50,15 @@
         "typescript",
         "cli"
     ],
-    "author": "",
+    "author": "Your Name <your.email@example.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yourusername/solulab.git"
+    },
+    "homepage": "https://github.com/yourusername/solulab#readme",
+    "bugs": {
+        "url": "https://github.com/yourusername/solulab/issues"
+    },
     "license": "MIT",
     "dependencies": {
         "chalk": "^5.4.1",

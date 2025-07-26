@@ -1,5 +1,8 @@
 # Solulab
 
+[![npm version](https://badge.fury.io/js/solulab.svg)](https://badge.fury.io/js/solulab)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A solution laboratory for experimenting with different implementations and test cases.
 
 ## Quick Start
@@ -7,7 +10,14 @@ A solution laboratory for experimenting with different implementations and test 
 ### Installation
 
 ```bash
+# Using npm
+npm install -g solulab
+
+# Using bun
 bun install -g solulab
+
+# Using yarn
+yarn global add solulab
 ```
 
 ### Usage
@@ -92,7 +102,7 @@ Create a `solulab.config.ts` file in your project root:
 
 ```typescript
 export default {
-  dbPath: '.solulab/solulab.db', // SQLite database location
+  dbPath: '.solulab/solulab.json', // Database file location (using LowDB)
   labGlobs: ['**/*.lab.ts'], // Glob patterns for lab files
 };
 ```
@@ -104,7 +114,7 @@ export default {
 - **Type-safe lab definitions** with Zod schemas
 - **Automatic discovery** of lab files
 - **Incremental execution** - skips already-run combinations
-- **SQLite persistence** for historical data
+- **Persistent storage** for historical data (using LowDB)
 - **Web UI** for viewing results and comparing runs
 - **Side-by-side comparison** with diff viewing
 - **Zero-config** developer experience

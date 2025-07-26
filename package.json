@@ -24,7 +24,10 @@
         "check": "bun run format:check && bun run lint && bun run typecheck",
         "check:fix": "bun run format && bun run lint:fix",
         "// CI/CD": "",
-        "ci": "bun run check && bun run test && bun run build"
+        "ci": "bun run check && bun run test && bun run build",
+        "// Publishing": "",
+        "publish:patch": "cd solulab && node scripts/publish.js --version=patch --no-dry-run",
+        "publish:dry": "cd solulab && node scripts/publish.js"
     },
     "devDependencies": {
         "@biomejs/biome": "^2.1.2",
