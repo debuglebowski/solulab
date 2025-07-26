@@ -26,8 +26,8 @@
         "// CI/CD": "",
         "ci": "bun run check && bun run test && bun run build",
         "// Publishing": "",
-        "publish:patch": "cd solulab && node scripts/publish.js --version=patch --no-dry-run",
-        "publish:dry": "cd solulab && node scripts/publish.js"
+        "publish:patch": "cd solulab && bun run publish:patch",
+        "publish:dry": "cd solulab && bun run publish:dry"
     },
     "devDependencies": {
         "@biomejs/biome": "^2.1.2",

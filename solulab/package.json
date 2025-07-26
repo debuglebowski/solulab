@@ -41,7 +41,9 @@
         "release:patch": "bun version patch",
         "release:minor": "bun version minor",
         "release:major": "bun version major",
-        "release:dry": "node scripts/publish.js --dry-run"
+        "release:dry": "node scripts/publish.js --dry-run",
+        "publish:patch": "node scripts/publish.js --version=patch --no-dry-run",
+        "publish:dry": "node scripts/publish.js"
     },
     "keywords": [
         "eval",
