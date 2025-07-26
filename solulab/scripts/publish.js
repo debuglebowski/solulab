@@ -1,50 +1,38 @@
 #!/usr/bin/env node
 
-import { exec } from 'child_process';
-import { promisify } from 'util';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import chalk from 'chalk';
+import { program } from 'commander';
+import { execa } from 'execa';
+import { password } from '@inquirer/prompts';
 
-const execAsync = promisify(exec);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packagePath = join(__dirname, '..', 'package.json');
 
-// Colors for console output
-const colors = {
-    reset: '\x1b[0m',
-    bright: '\x1b[1m',
-    red: '\x1b[31m',
-    green: '\x1b[32m',
-    yellow: '\x1b[33m',
-    blue: '\x1b[34m',
-    cyan: '\x1b[36m'
-};
 
-function log(message, color = colors.reset) {
-    console.log(`${color}${message}${colors.reset}`);
-}
 
 async function runCommand(command, description, dryRun = false) {
-    log(`\n${description}...`, colors.cyan);
+    console.log(chalk.cyan(`\n${description}...`));
     
     if (dryRun) {
-        log(`[DRY RUN] Would execute: ${command}`, colors.yellow);
+        console.log(chalk.yellow(`[DRY RUN] Would execute: ${command}`));
         return { stdout: '[dry run output]', stderr: '' };
     }
     
     try {
-        const result = await execAsync(command);
-        log(`✓ ${description} completed`, colors.green);
+        const result = await execa(command, { shell: true });
+        console.log(chalk.green(`✓ ${description} completed`));
         return result;
     } catch (error) {
-        log(`✗ ${description} failed`, colors.red);
+        console.log(chalk.red(`✗ ${description} failed`));
         throw error;
     }
 }
 
 async function checkPrerequisites() {
-    log('\nChecking prerequisites...', colors.bright);
+    console.log(chalk.bold('\nChecking prerequisites...'));
     
     // Check if we're in the right directory
     try {
@@ -52,25 +40,25 @@ async function checkPrerequisites() {
         if (pkg.name !== 'solulab') {
             throw new Error('Not in solulab package directory');
         }
-        log(`✓ Found package: ${pkg.name}@${pkg.version}`, colors.green);
+        console.log(chalk.green(`✓ Found package: ${pkg.name}@${pkg.version}`));
     } catch (error) {
-        log('✗ Could not find solulab package.json', colors.red);
+        console.log(chalk.red('✗ Could not find solulab package.json'));
         throw error;
     }
     
     // Check git status
     try {
-        const { stdout } = await execAsync('git status --porcelain');
+        const { stdout } = await execa('git', ['status', '--porcelain']);
         if (stdout.trim()) {
-            log('✗ Git working directory not clean', colors.red);
-            log('  Uncommitted changes:', colors.yellow);
+            console.log(chalk.red('✗ Git working directory not clean'));
+            console.log(chalk.yellow('  Uncommitted changes:'));
             console.log(stdout);
             throw new Error('Please commit or stash your changes first');
         }
-        log('✓ Git working directory clean', colors.green);
+        console.log(chalk.green('✓ Git working directory clean'));
     } catch (error) {
         if (error.message.includes('not a git repository')) {
-            log('⚠ Not a git repository (continuing anyway)', colors.yellow);
+            console.log(chalk.yellow('⚠ Not a git repository (continuing anyway)'));
         } else {
             throw error;
         }
@@ -78,13 +66,13 @@ async function checkPrerequisites() {
     
     // Check if on main/master branch
     try {
-        const { stdout } = await execAsync('git branch --show-current');
+        const { stdout } = await execa('git', ['branch', '--show-current']);
         const branch = stdout.trim();
         if (branch !== 'main' && branch !== 'master') {
-            log(`⚠ Not on main branch (current: ${branch})`, colors.yellow);
-            log('  Consider switching to main branch before publishing', colors.yellow);
+            console.log(chalk.yellow(`⚠ Not on main branch (current: ${branch})`));
+            console.log(chalk.yellow('  Consider switching to main branch before publishing'));
         } else {
-            log(`✓ On ${branch} branch`, colors.green);
+            console.log(chalk.green(`✓ On ${branch} branch`));
         }
     } catch (error) {
         // Ignore git errors
@@ -92,10 +80,10 @@ async function checkPrerequisites() {
 }
 
 async function publish(options = {}) {
-    const { dryRun = true, version, tag = 'latest', otp } = options;
+    let { dryRun = true, version, tag = 'latest', otp } = options;
     
-    log(`\n${colors.bright}Solulab NPM Publishing Script${colors.reset}`);
-    log(`Mode: ${dryRun ? 'DRY RUN' : 'LIVE PUBLISH'}`, dryRun ? colors.yellow : colors.red);
+    console.log(chalk.bold('\nSolulab NPM Publishing Script'));
+    console.log(dryRun ? chalk.yellow(`Mode: DRY RUN`) : chalk.red(`Mode: LIVE PUBLISH`));
     
     try {
         // Run prerequisites check
@@ -117,72 +105,72 @@ async function publish(options = {}) {
         
         // Get current version
         const pkg = JSON.parse(readFileSync(packagePath, 'utf8'));
-        log(`\nPublishing ${pkg.name}@${pkg.version} with tag '${tag}'`, colors.bright);
+        console.log(chalk.bold(`\nPublishing ${pkg.name}@${pkg.version} with tag '${tag}'`));
+        
+        // Prompt for OTP if not provided and not in dry run
+        if (!dryRun && !otp) {
+            console.log(chalk.yellow('\nℹ NPM requires a one-time password from your authenticator.'));
+            otp = await password({
+                message: 'Enter OTP code:',
+                mask: '•'
+            });
+            if (!otp) {
+                throw new Error('OTP code is required for publishing');
+            }
+        }
         
         // Run npm publish
         const publishCmd = `npm publish --tag ${tag} ${dryRun ? '--dry-run' : ''} ${otp ? `--otp=${otp}` : ''}`;
         await runCommand(publishCmd, 'Publishing to npm', false);
         
         if (!dryRun) {
-            log('\n✓ Package published successfully!', colors.green);
-            log(`  View at: https://www.npmjs.com/package/${pkg.name}`, colors.cyan);
+            console.log(chalk.green('\n✓ Package published successfully!'));
+            console.log(chalk.cyan(`  View at: https://www.npmjs.com/package/${pkg.name}`));
         } else {
-            log('\n✓ Dry run completed successfully!', colors.green);
-            log('  To publish for real, run:', colors.yellow);
-            log('  npm run release:dry -- --no-dry-run', colors.yellow);
+            console.log(chalk.green('\n✓ Dry run completed successfully!'));
+            console.log(chalk.yellow('  To publish for real, run:'));
+            console.log(chalk.yellow('  npm run release:dry -- --no-dry-run'));
         }
         
     } catch (error) {
-        log(`\n✗ Publishing failed: ${error.message}`, colors.red);
+        console.log(chalk.red(`\n✗ Publishing failed: ${error.message}`));
         
         // Check if error is due to missing OTP
         if (error.message.includes('OTP') || error.message.includes('one-time password')) {
-            log('\nℹ NPM requires a one-time password from your authenticator.', colors.yellow);
-            log('  Please run again with --otp=<code> parameter:', colors.yellow);
-            log(`  npm run publish:patch -- --otp=123456`, colors.cyan);
+            console.log(chalk.yellow('\nℹ NPM requires a one-time password from your authenticator.'));
+            console.log(chalk.yellow('  Please run again with --otp=<code> parameter:'));
+            console.log(chalk.cyan(`  npm run publish:patch -- --otp=123456`));
         }
         
         process.exit(1);
     }
 }
 
-// Parse command line arguments
-const args = process.argv.slice(2);
-const options = {
-    dryRun: !args.includes('--no-dry-run'),
-    version: args.find(arg => arg.startsWith('--version='))?.split('=')[1],
-    tag: args.find(arg => arg.startsWith('--tag='))?.split('=')[1] || 'latest',
-    otp: args.find(arg => arg.startsWith('--otp='))?.split('=')[1]
-};
-
-if (args.includes('--help')) {
-    console.log(`
-Solulab NPM Publishing Script
-
-Usage: node scripts/publish.js [options]
-
-Options:
-  --no-dry-run     Actually publish (default is dry run)
-  --version=TYPE   Bump version before publishing (patch|minor|major)
-  --tag=TAG        NPM dist-tag (default: latest)
-  --otp=CODE       One-time password from your authenticator
-  --help           Show this help message
-
+// Setup command line interface
+program
+    .name('publish')
+    .description('Solulab NPM Publishing Script')
+    .option('--no-dry-run', 'Actually publish (default is dry run)')
+    .option('--version <type>', 'Bump version before publishing (patch|minor|major)')
+    .option('--tag <tag>', 'NPM dist-tag', 'latest')
+    .option('--otp <code>', 'One-time password from your authenticator')
+    .addHelpText('after', `
 Examples:
   # Dry run (default)
   node scripts/publish.js
   
   # Publish patch version
-  node scripts/publish.js --version=patch --no-dry-run
+  node scripts/publish.js --version patch --no-dry-run
   
   # Publish with custom tag
-  node scripts/publish.js --tag=beta --no-dry-run
+  node scripts/publish.js --tag beta --no-dry-run
   
   # Publish with OTP
-  node scripts/publish.js --version=patch --no-dry-run --otp=123456
-`);
-    process.exit(0);
-}
+  node scripts/publish.js --version patch --no-dry-run --otp 123456`);
+
+// Parse arguments
+program.parse();
+const options = program.opts();
 
 // Run the publish process
 publish(options);
