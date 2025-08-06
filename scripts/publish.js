@@ -107,6 +107,12 @@ async function publish(options = {}) {
         // Bump version if specified
         if (version) {
             await runCommand(`npm version ${version}`, `Bumping version to ${version}`, dryRun);
+            
+            // Stage all changes and amend the version commit to include any build artifacts
+            if (!dryRun) {
+                await runCommand('git add -A', 'Staging all changes', dryRun);
+                await runCommand('git commit --amend --no-edit', 'Amending version commit with staged changes', dryRun);
+            }
         }
 
         // Get current version
