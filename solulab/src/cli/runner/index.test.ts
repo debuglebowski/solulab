@@ -1,9 +1,6 @@
-import { describe, test, expect, mock, beforeEach, afterEach } from 'bun:test';
-import * as path from 'node:path';
-import * as fs from 'node:fs/promises';
-import { runLabs } from './index';
+import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 
-// Mock modules
+// Mock modules before importing the module under test
 const mockDiscoverLabs = mock();
 const mockDatabase = {
     getOrCreateLab: mock(),
@@ -11,6 +8,13 @@ const mockDatabase = {
     saveResult: mock(),
     close: mock(),
 };
+
+mock.module('@/core', () => ({
+    discoverLabs: mockDiscoverLabs,
+    database: mockDatabase,
+}));
+
+import { runLabs } from './index';
 
 // Mock console methods
 const originalConsoleLog = console.log;
@@ -28,7 +32,7 @@ describe('CLI runner', () => {
         mockDatabase.close.mockClear();
         mockConsoleLog.mockClear();
         mockConsoleError.mockClear();
-        
+
         // Replace console methods
         console.log = mockConsoleLog;
         console.error = mockConsoleError;
@@ -41,298 +45,312 @@ describe('CLI runner', () => {
     });
 
     test('handles no labs found', async () => {
-        // Create a test config file
-        const testDir = path.join(import.meta.dir, 'test-runner-empty');
-        await fs.mkdir(testDir, { recursive: true });
-        
+        mockDiscoverLabs.mockResolvedValue([]);
+
         const config = {
-            labGlobs: [`${testDir}/*.lab.ts`],
+            labGlobs: ['**/*.lab.ts'],
         };
 
-        try {
-            // Run should exit with 0 (process.exit mocked below)
-            const mockExit = mock();
-            const originalExit = process.exit;
-            process.exit = mockExit as any;
-            
-            await runLabs(config);
-            
-            // Should log no labs found
-            expect(mockConsoleLog).toHaveBeenCalledWith(expect.stringContaining('No labs found'));
-            
-            process.exit = originalExit;
-        } finally {
-            await fs.rm(testDir, { recursive: true, force: true });
-        }
+        await runLabs(config);
+
+        // Should log no labs found
+        const logCalls = mockConsoleLog.mock.calls;
+        const foundNoLabs = logCalls.some((call) => call[0]?.toString().includes('No labs found'));
+        expect(foundNoLabs).toBe(true);
+
+        // Should close database
+        expect(mockDatabase.close).toHaveBeenCalled();
     });
 
     test('executes discovered labs successfully', async () => {
-        // Create test lab file
-        const testDir = path.join(import.meta.dir, 'test-runner-success');
-        const testFile = path.join(testDir, 'test.lab.ts');
-        
-        await fs.mkdir(testDir, { recursive: true });
-        await Bun.write(
-            testFile,
-            `
-            import { createSolutionLab } from '../../core/labs/createSolutionLab';
-            import { z } from 'zod';
-            
-            export const lab__test_runner = createSolutionLab({
+        mockDiscoverLabs.mockResolvedValue([
+            {
                 name: 'test-runner-lab',
                 description: 'Test lab for runner',
-                paramSchema: z.object({ value: z.number() }),
-                resultSchema: z.object({ result: z.number() }),
-                versions: [
-                    { name: 'v1', execute: async (p) => ({ result: p.value * 2 }) },
-                    { name: 'v2', execute: async (p) => ({ result: p.value * 3 }) },
-                ],
-                cases: [
-                    { name: 'case1', arguments: { value: 5 } },
-                    { name: 'case2', arguments: { value: 10 } },
-                ],
-            });
-            `
-        );
+                filePath: '/fake/path/test.lab.ts',
+                paramSchema: { type: 'object' },
+                resultSchema: { type: 'object' },
+                versions: ['v1', 'v2'],
+                cases: ['case1', 'case2'],
+            },
+        ]);
 
-        const config = {
-            labGlobs: [`${testDir}/*.lab.ts`],
+        mockDatabase.getOrCreateLab.mockResolvedValue('lab-123');
+        mockDatabase.hasResult.mockResolvedValue(false);
+        mockDatabase.saveResult.mockResolvedValue(undefined);
+
+        // Mock the dynamic import
+        const mockLab = {
+            execute: mock().mockResolvedValue({
+                versionName: 'v1',
+                caseName: 'case1',
+                result: { result: 10 },
+                duration: 5,
+                error: null,
+            }),
         };
 
-        try {
-            // Mock process.exit
-            const mockExit = mock();
-            const originalExit = process.exit;
-            process.exit = mockExit as any;
-            
-            await runLabs(config);
-            
-            // Should have logged success
-            expect(mockConsoleLog).toHaveBeenCalled();
-            
-            // Should exit with 0 for success
-            expect(mockExit).toHaveBeenCalledWith(0);
-            
-            process.exit = originalExit;
-        } finally {
-            await fs.rm(testDir, { recursive: true, force: true });
-        }
+        // Mock dynamic import
+        const originalImport = global.import;
+        global.import = mock().mockResolvedValue({
+            lab__test_runner: mockLab,
+        }) as any;
+
+        const config = {
+            labGlobs: ['**/*.lab.ts'],
+        };
+
+        // Mock process.exit
+        const mockExit = mock();
+        const originalExit = process.exit;
+        process.exit = mockExit as any;
+
+        await runLabs(config);
+
+        // Should have logged success
+        expect(mockConsoleLog).toHaveBeenCalled();
+
+        // Should exit with 0 for success
+        expect(mockExit).toHaveBeenCalledWith(0);
+
+        // Restore
+        process.exit = originalExit;
+        global.import = originalImport;
     });
 
     test('skips already executed combinations', async () => {
-        // Create test lab file
-        const testDir = path.join(import.meta.dir, 'test-runner-skip');
-        const testFile = path.join(testDir, 'skip.lab.ts');
-        
-        await fs.mkdir(testDir, { recursive: true });
-        await Bun.write(
-            testFile,
-            `
-            import { createSolutionLab } from '../../core/labs/createSolutionLab';
-            import { z } from 'zod';
-            
-            export const lab__skip_test = createSolutionLab({
+        mockDiscoverLabs.mockResolvedValue([
+            {
                 name: 'skip-test-lab',
                 description: 'Test skipping',
-                paramSchema: z.object({ x: z.number() }),
-                resultSchema: z.object({ y: z.number() }),
-                versions: [
-                    { name: 'v1', execute: async (p) => ({ y: p.x }) },
-                ],
-                cases: [
-                    { name: 'case1', arguments: { x: 1 } },
-                ],
-            });
-            `
-        );
+                filePath: '/fake/path/skip.lab.ts',
+                paramSchema: { type: 'object' },
+                resultSchema: { type: 'object' },
+                versions: ['v1'],
+                cases: ['case1'],
+            },
+        ]);
 
-        // Note: Database mocking would be needed here for full test coverage
-        // Currently testing with actual file system operations
+        mockDatabase.getOrCreateLab.mockResolvedValue('lab-456');
+        mockDatabase.hasResult.mockResolvedValue(true); // Already executed
 
-        const config = {
-            labGlobs: [`${testDir}/*.lab.ts`],
+        // Mock the dynamic import
+        const mockLab = {
+            execute: mock(), // Should not be called
         };
 
-        try {
-            // Mock process.exit
-            const mockExit = mock();
-            const originalExit = process.exit;
-            process.exit = mockExit as any;
-            
-            await runLabs(config);
-            
-            // Should log skipping message
-            const logCalls = mockConsoleLog.mock.calls;
-            // Check if skip messages were logged
-            logCalls.some(call => 
-                call[0]?.toString().includes('Skipping') || 
+        const originalImport = global.import;
+        global.import = mock().mockResolvedValue({
+            lab__skip_test: mockLab,
+        }) as any;
+
+        const config = {
+            labGlobs: ['**/*.lab.ts'],
+        };
+
+        // Mock process.exit
+        const mockExit = mock();
+        const originalExit = process.exit;
+        process.exit = mockExit as any;
+
+        await runLabs(config);
+
+        // Should log skipping message
+        const logCalls = mockConsoleLog.mock.calls;
+        const foundSkip = logCalls.some(
+            (call) =>
+                call[0]?.toString().includes('Skipping') ||
                 call[0]?.toString().includes('already exists')
-            );
-            
-            // If not all were skipped, should exit with 0
-            expect(mockExit).toHaveBeenCalled();
-            
-            process.exit = originalExit;
-        } finally {
-            await fs.rm(testDir, { recursive: true, force: true });
-        }
+        );
+        expect(foundSkip).toBe(true);
+
+        // Should not have executed the lab
+        expect(mockLab.execute).not.toHaveBeenCalled();
+
+        // Should exit with 0 (no new executions)
+        expect(mockExit).toHaveBeenCalledWith(0);
+
+        // Restore
+        process.exit = originalExit;
+        global.import = originalImport;
     });
 
     test('handles execution errors', async () => {
-        // Create test lab file with error
-        const testDir = path.join(import.meta.dir, 'test-runner-error');
-        const testFile = path.join(testDir, 'error.lab.ts');
-        
-        await fs.mkdir(testDir, { recursive: true });
-        await Bun.write(
-            testFile,
-            `
-            import { createSolutionLab } from '../../core/labs/createSolutionLab';
-            import { z } from 'zod';
-            
-            export const lab__error_test = createSolutionLab({
+        mockDiscoverLabs.mockResolvedValue([
+            {
                 name: 'error-test-lab',
                 description: 'Test errors',
-                paramSchema: z.object({ shouldFail: z.boolean() }),
-                resultSchema: z.object({ ok: z.boolean() }),
-                versions: [
-                    { 
-                        name: 'failing', 
-                        execute: async (p) => {
-                            if (p.shouldFail) throw new Error('Test error');
-                            return { ok: true };
-                        }
-                    },
-                ],
-                cases: [
-                    { name: 'fail', arguments: { shouldFail: true } },
-                    { name: 'pass', arguments: { shouldFail: false } },
-                ],
-            });
-            `
-        );
+                filePath: '/fake/path/error.lab.ts',
+                paramSchema: { type: 'object' },
+                resultSchema: { type: 'object' },
+                versions: ['failing'],
+                cases: ['fail', 'pass'],
+            },
+        ]);
 
-        const config = {
-            labGlobs: [`${testDir}/*.lab.ts`],
+        mockDatabase.getOrCreateLab.mockResolvedValue('lab-789');
+        mockDatabase.hasResult.mockResolvedValue(false);
+
+        // Mock the dynamic import with a lab that throws an error
+        const mockLab = {
+            execute: mock()
+                .mockRejectedValueOnce(new Error('Test error')) // First call fails
+                .mockResolvedValueOnce({
+                    // Second call succeeds
+                    versionName: 'failing',
+                    caseName: 'pass',
+                    result: { ok: true },
+                    duration: 5,
+                    error: null,
+                }),
         };
 
-        try {
-            // Mock process.exit
-            const mockExit = mock();
-            const originalExit = process.exit;
-            process.exit = mockExit as any;
-            
-            await runLabs(config);
-            
-            // Should log error messages
-            const logCalls = mockConsoleLog.mock.calls;
-            // Check if error messages were logged
-            logCalls.some(call => 
-                call[0]?.toString().includes('failed') || 
-                call[0]?.toString().includes('❌')
-            );
-            
-            // Should exit with 1 for failure (if there were failures)
-            expect(mockExit).toHaveBeenCalled();
-            
-            process.exit = originalExit;
-        } finally {
-            await fs.rm(testDir, { recursive: true, force: true });
-        }
+        const originalImport = global.import;
+        global.import = mock().mockResolvedValue({
+            lab__error_test: mockLab,
+        }) as any;
+
+        const config = {
+            labGlobs: ['**/*.lab.ts'],
+        };
+
+        // Mock process.exit
+        const mockExit = mock();
+        const originalExit = process.exit;
+        process.exit = mockExit as any;
+
+        await runLabs(config);
+
+        // Should log error messages
+        const logCalls = mockConsoleLog.mock.calls;
+        const foundError = logCalls.some(
+            (call) => call[0]?.toString().includes('threw') || call[0]?.toString().includes('❌')
+        );
+        expect(foundError).toBe(true);
+
+        // Should exit with 1 for failure
+        expect(mockExit).toHaveBeenCalledWith(1);
+
+        // Restore
+        process.exit = originalExit;
+        global.import = originalImport;
     });
 
     test('handles missing lab export', async () => {
-        // Create test lab file without proper export
-        const testDir = path.join(import.meta.dir, 'test-runner-no-export');
-        const testFile = path.join(testDir, 'no-export.lab.ts');
-        
-        await fs.mkdir(testDir, { recursive: true });
-        await Bun.write(
-            testFile,
-            `
-            // File with .lab.ts extension but no lab__ export
-            export const someOtherThing = {
-                definition: { name: 'not-a-lab' }
-            };
-            `
-        );
+        mockDiscoverLabs.mockResolvedValue([
+            {
+                name: 'no-export-lab',
+                description: 'Test missing export',
+                filePath: '/fake/path/no-export.lab.ts',
+                paramSchema: { type: 'object' },
+                resultSchema: { type: 'object' },
+                versions: ['v1'],
+                cases: ['case1'],
+            },
+        ]);
+
+        // Mock the dynamic import with no lab__ export
+        const originalImport = global.import;
+        global.import = mock().mockResolvedValue({
+            someOtherThing: { definition: { name: 'not-a-lab' } },
+            // No lab__ export
+        }) as any;
 
         const config = {
-            labGlobs: [`${testDir}/*.lab.ts`],
+            labGlobs: ['**/*.lab.ts'],
         };
 
-        try {
-            // Mock process.exit
-            const mockExit = mock();
-            const originalExit = process.exit;
-            process.exit = mockExit as any;
-            
-            await runLabs(config);
-            
-            // Should handle gracefully
-            expect(mockExit).toHaveBeenCalled();
-            
-            process.exit = originalExit;
-        } finally {
-            await fs.rm(testDir, { recursive: true, force: true });
-        }
+        // Mock process.exit
+        const mockExit = mock();
+        const originalExit = process.exit;
+        process.exit = mockExit as any;
+
+        await runLabs(config);
+
+        // Should log error about missing export
+        const errorCalls = mockConsoleError.mock.calls;
+        const foundError = errorCalls.some((call) =>
+            call[0]?.toString().includes('No lab export found')
+        );
+        expect(foundError).toBe(true);
+
+        // Should still exit normally (no executions)
+        expect(mockExit).toHaveBeenCalledWith(0);
+
+        // Restore
+        process.exit = originalExit;
+        global.import = originalImport;
     });
 
     test('reports correct statistics', async () => {
-        // Create test lab with multiple versions and cases
-        const testDir = path.join(import.meta.dir, 'test-runner-stats');
-        const testFile = path.join(testDir, 'stats.lab.ts');
-        
-        await fs.mkdir(testDir, { recursive: true });
-        await Bun.write(
-            testFile,
-            `
-            import { createSolutionLab } from '../../core/labs/createSolutionLab';
-            import { z } from 'zod';
-            
-            export const lab__stats_test = createSolutionLab({
+        mockDiscoverLabs.mockResolvedValue([
+            {
                 name: 'stats-test-lab',
                 description: 'Test statistics',
-                paramSchema: z.object({ n: z.number() }),
-                resultSchema: z.object({ result: z.number() }),
-                versions: [
-                    { name: 'v1', execute: async (p) => ({ result: p.n }) },
-                    { name: 'v2', execute: async (p) => ({ result: p.n * 2 }) },
-                ],
-                cases: [
-                    { name: 'c1', arguments: { n: 1 } },
-                    { name: 'c2', arguments: { n: 2 } },
-                    { name: 'c3', arguments: { n: 3 } },
-                ],
-            });
-            `
-        );
+                filePath: '/fake/path/stats.lab.ts',
+                paramSchema: { type: 'object' },
+                resultSchema: { type: 'object' },
+                versions: ['v1', 'v2'],
+                cases: ['c1', 'c2', 'c3'],
+            },
+        ]);
 
-        const config = {
-            labGlobs: [`${testDir}/*.lab.ts`],
+        mockDatabase.getOrCreateLab.mockResolvedValue('lab-stats');
+        mockDatabase.hasResult
+            .mockResolvedValueOnce(false) // v1 x c1 - new
+            .mockResolvedValueOnce(true) // v1 x c2 - skip
+            .mockResolvedValueOnce(false) // v1 x c3 - new
+            .mockResolvedValueOnce(false) // v2 x c1 - new
+            .mockResolvedValueOnce(true) // v2 x c2 - skip
+            .mockResolvedValueOnce(false); // v2 x c3 - new
+
+        // Mock the dynamic import
+        const mockLab = {
+            execute: mock().mockResolvedValue({
+                versionName: 'v1',
+                caseName: 'c1',
+                result: { result: 1 },
+                duration: 5,
+                error: null,
+            }),
         };
 
-        try {
-            // Mock process.exit
-            const mockExit = mock();
-            const originalExit = process.exit;
-            process.exit = mockExit as any;
-            
-            await runLabs(config);
-            
-            // Should log statistics (6 total combinations: 2 versions × 3 cases)
-            const logCalls = mockConsoleLog.mock.calls;
-            // Check if statistics were logged
-            logCalls.some(call => {
-                const str = call[0]?.toString() || '';
-                return str.includes('Total combinations') || 
-                       str.includes('Executed') ||
-                       str.includes('succeeded');
-            });
-            
-            process.exit = originalExit;
-        } finally {
-            await fs.rm(testDir, { recursive: true, force: true });
-        }
+        const originalImport = global.import;
+        global.import = mock().mockResolvedValue({
+            lab__stats_test: mockLab,
+        }) as any;
+
+        const config = {
+            labGlobs: ['**/*.lab.ts'],
+        };
+
+        // Mock process.exit
+        const mockExit = mock();
+        const originalExit = process.exit;
+        process.exit = mockExit as any;
+
+        await runLabs(config);
+
+        // Should log statistics (6 total combinations: 2 versions × 3 cases)
+        const logCalls = mockConsoleLog.mock.calls;
+        const foundStats = logCalls.some((call) => {
+            const str = call[0]?.toString() || '';
+            return (
+                str.includes('Total combinations') ||
+                str.includes('Executed') ||
+                str.includes('succeeded')
+            );
+        });
+        expect(foundStats).toBe(true);
+
+        // Should have executed 4 times (6 total - 2 skipped)
+        expect(mockLab.execute).toHaveBeenCalledTimes(4);
+
+        // Should exit with 0 for success
+        expect(mockExit).toHaveBeenCalledWith(0);
+
+        // Restore
+        process.exit = originalExit;
+        global.import = originalImport;
     });
 });
