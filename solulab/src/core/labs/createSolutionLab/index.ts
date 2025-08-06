@@ -1,15 +1,35 @@
-import type { z } from 'zod';
+import { z } from 'zod';
 import type { Lab, LabDefinition, LabOptions, LabResult } from '../../types';
 
-export function createSolutionLab<TParams, TResult extends Record<string, unknown>>(
-    options: LabOptions<TParams, TResult> & {
-        resultSchema: z.ZodObject<z.ZodRawShape, 'strip', z.ZodTypeAny, TResult>;
-    }
-): Lab<TParams, TResult> {
+/**
+ * Creates a solution lab with type-safe parameters and results.
+ *
+ * Type checking behavior:
+ * - Compile time: TypeScript catches missing required properties
+ * - Runtime: Zod validation catches both missing and excess properties
+ *
+ * @example
+ * ```typescript
+ * const lab = createSolutionLab({
+ *   resultSchema: z.object({ value: z.number() }),
+ *   versions: [{
+ *     execute: () => ({ value: 42 }) // ✅ Valid
+ *     execute: () => ({})            // ❌ Compile error: missing 'value'
+ *     execute: () => ({ value: 42, extra: 1 }) // ⚠️ Allowed at compile time, caught at runtime
+ *   }]
+ * })
+ * ```
+ */
+export function createSolutionLab<
+    TParamSchema extends z.ZodSchema,
+    TResultSchema extends z.ZodObject<z.ZodRawShape>,
+>(
+    options: LabOptions<TParamSchema, TResultSchema>
+): Lab<z.infer<TParamSchema>, z.infer<TResultSchema>> {
     const { name, description, paramSchema, resultSchema, versions, cases } = options;
 
     // Enforce that resultSchema is a ZodObject
-    if (!resultSchema._def || resultSchema._def.typeName !== 'ZodObject') {
+    if (!(resultSchema instanceof z.ZodObject)) {
         throw new Error(
             `Lab "${name}" must have an object resultSchema. Use z.object({...}) instead of primitive schemas.`
         );
@@ -19,8 +39,8 @@ export function createSolutionLab<TParams, TResult extends Record<string, unknow
     const definition: LabDefinition = {
         name,
         description,
-        paramSchema: paramSchema._def,
-        resultSchema: resultSchema._def,
+        paramSchema: z.toJSONSchema(paramSchema),
+        resultSchema: z.toJSONSchema(resultSchema),
         versions: versions.map((v) => v.name),
         cases: cases.map((c) => c.name),
         filePath: '', // Will be set by discovery
@@ -30,7 +50,7 @@ export function createSolutionLab<TParams, TResult extends Record<string, unknow
     async function execute(
         versionName: string,
         caseName: string
-    ): Promise<LabResult<TParams, TResult>> {
+    ): Promise<LabResult<z.infer<TParamSchema>, z.infer<TResultSchema>>> {
         const version = versions.find((v) => v.name === versionName);
 
         if (!version) {
@@ -75,7 +95,7 @@ export function createSolutionLab<TParams, TResult extends Record<string, unknow
                 versionName,
                 caseName,
                 params: testCase.arguments,
-                result: null as unknown as TResult,
+                result: null as unknown as z.infer<TResultSchema>,
                 timestamp,
                 duration,
                 error: error instanceof Error ? error.message : String(error),
@@ -84,8 +104,10 @@ export function createSolutionLab<TParams, TResult extends Record<string, unknow
     }
 
     // Execute all version × case combinations
-    async function executeAll(): Promise<LabResult<TParams, TResult>[]> {
-        const results: LabResult<TParams, TResult>[] = [];
+    async function executeAll(): Promise<
+        LabResult<z.infer<TParamSchema>, z.infer<TResultSchema>>[]
+    > {
+        const results: LabResult<z.infer<TParamSchema>, z.infer<TResultSchema>>[] = [];
 
         for (const version of versions) {
             for (const testCase of cases) {

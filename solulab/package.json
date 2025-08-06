@@ -31,19 +31,15 @@
         "build": "bun run clean && bun run typecheck && bun run build:lib && bun run build:ui",
         "build:lib": "tsup",
         "build:ui": "vite build",
+        "build:watch": "tsup --watch",
         "clean": "rm -rf dist",
         "// Code Quality": "",
         "typecheck": "tsc --noEmit",
+        "tswatch": "tsc --noEmit --watch",
         "// Publishing": "",
         "prepublishOnly": "bun run typecheck && bun test && bun run build",
         "preversion": "bun run test",
-        "postversion": "git push && git push --tags",
-        "release:patch": "bun version patch",
-        "release:minor": "bun version minor",
-        "release:major": "bun version major",
-        "release:dry": "node scripts/publish.js --dry-run",
-        "publish:patch": "node scripts/publish.js --version=patch --no-dry-run",
-        "publish:dry": "node scripts/publish.js"
+        "postversion": "git push && git push --tags"
     },
     "keywords": [
         "eval",
@@ -69,7 +65,7 @@
         "glob": "^11.0.3",
         "lowdb": "^7.0.1",
         "open": "^10.2.0",
-        "zod": "^3.25.76"
+        "zod": "^4.0.15"
     },
     "devDependencies": {
         "@inquirer/prompts": "^7.8.0",

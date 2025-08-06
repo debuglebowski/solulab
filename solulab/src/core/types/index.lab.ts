@@ -14,12 +14,22 @@ export interface LabCase<TParams> {
     arguments: TParams;
 }
 
-// Lab options for creating a lab (configuration for createSolutionLab)
-export interface LabOptions<TParams, TResult> extends BaseLabMetadata {
-    paramSchema: z.ZodSchema<TParams>;
-    resultSchema: z.ZodSchema<TResult>;
-    versions: LabVersion<TParams, TResult>[];
-    cases: LabCase<TParams>[];
+/**
+ * Lab options for creating a lab.
+ * 
+ * Note on type checking:
+ * - Missing properties in execute() returns are caught at compile time
+ * - Excess properties are caught at runtime by Zod validation
+ * - This is due to TypeScript's structural typing in return positions
+ */
+export interface LabOptions<
+    TParamSchema extends z.ZodSchema,
+    TResultSchema extends z.ZodSchema
+> extends BaseLabMetadata {
+    paramSchema: TParamSchema;
+    resultSchema: TResultSchema;
+    versions: LabVersion<z.infer<TParamSchema>, z.infer<TResultSchema>>[];
+    cases: LabCase<z.infer<TParamSchema>>[];
 }
 
 // Lab definition for discovery (in-memory lab metadata with runtime info)

@@ -45,7 +45,10 @@
       "Bash(git branch:*)",
       "Bash(git push:*)",
       "Bash(npm view:*)",
-      "Bash(npm:*)"
+      "Bash(npm:*)",
+      "Bash(npx tsc:*)",
+      "WebFetch(domain:zod.dev)",
+      "Bash(./scripts/lint.sh:*)"
     ],
     "deny": []
   }

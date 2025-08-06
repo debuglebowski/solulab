@@ -7,10 +7,13 @@
         "dev": "solulab run",
         "run": "solulab run",
         "reset": "solulab reset",
-        "app": "solulab app"
+        "app": "solulab app",
+        "typecheck": "tsc --noEmit",
+        "tswatch": "tsc --noEmit --watch"
     },
     "dependencies": {
-        "solulab": "file:../solulab"
+        "solulab": "file:../solulab",
+        "zod": "^4.0.15"
     },
     "devDependencies": {
         "@types/node": "^22.10.2",
