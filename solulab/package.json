@@ -51,7 +51,7 @@
     "author": "debuglebowski",
     "repository": {
         "type": "git",
-        "url": "https://github.com/debuglebowski/solulab"
+        "url": "git+https://github.com/debuglebowski/solulab.git"
     },
     "homepage": "https://github.com/debuglebowski/solulab#readme",
     "bugs": {
