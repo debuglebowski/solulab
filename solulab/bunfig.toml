@@ -7,7 +7,7 @@ auto = "fallback"
 
 [test]
 # Test configuration
-preload = ["./src/test-setup.ts"]
+# preload = ["./src/test-setup.ts"]
 
 [run]
 # Runtime configuration
